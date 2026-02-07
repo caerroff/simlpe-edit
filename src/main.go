@@ -22,28 +22,34 @@ func main() {
 	os.Chdir(dirPath)
 	workDirWidget := widget.NewLabel(dirPath)
 
-	contents, err := openDirectory(dirPath)
+	contents, err := GetContentOfDirectory(dirPath)
 	if err != nil {
 		return
 	}
+
+	var index int = 0
+	var openedFileContent *os.DirEntry = &contents[index]
+	editor := CreateTextEditor(openedFileContent)
+
 	w.SetContent(container.NewVBox(
 		workDirWidget,
 		container.NewGridWithColumns(
 			2,
-			createFileExplorer(contents),
-			createTextEditor(contents[0]),
+			CreateFileExplorer(contents, &index),
+			editor,
 		),
 	))
 
 	w.ShowAndRun()
 }
 
-func createTextEditor(file os.DirEntry) fyne.CanvasObject {
+func CreateTextEditor(file *os.DirEntry) fyne.CanvasObject {
 	var editor fyne.CanvasObject
-	if file.IsDir() {
+	actualFile := *file
+	if actualFile.IsDir() {
 		return editor
 	}
-	text, err := os.ReadFile(file.Name())
+	text, err := os.ReadFile(actualFile.Name())
 	if err != nil {
 		fmt.Println("Error while opening the file")
 	}
@@ -52,12 +58,15 @@ func createTextEditor(file os.DirEntry) fyne.CanvasObject {
 	return editor
 }
 
-func createFileExplorer(contents []os.DirEntry) *fyne.Container {
+func CreateFileExplorer(contents []os.DirEntry, index *int) *fyne.Container {
 	fileExplorer := container.NewGridWithRows(
 		len(contents),
 	)
-	for _, entry := range contents {
-		fileExplorer.Add(widget.NewButton(entry.Name(), func() {}))
+	for i, entry := range contents {
+		fileExplorer.Add(widget.NewButton(entry.Name(), func() {
+			*index = i
+			fmt.Printf("Index %d\n", *index)
+		}))
 	}
 
 	fileExplorer.Resize(fyne.NewSize(300, 600))
@@ -65,7 +74,7 @@ func createFileExplorer(contents []os.DirEntry) *fyne.Container {
 	return fileExplorer
 }
 
-func openDirectory(path string) ([]os.DirEntry, error) {
+func GetContentOfDirectory(path string) ([]os.DirEntry, error) {
 	// if !path.IsDir() {
 	// 	return contents, errors.New("Path is not a directory.")
 	// }
@@ -75,5 +84,6 @@ func openDirectory(path string) ([]os.DirEntry, error) {
 		fmt.Printf("Error when trying to open dir %s", path)
 		return make([]os.DirEntry, 0), error
 	}
+
 	return contents, nil
 }
