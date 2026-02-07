@@ -34,8 +34,8 @@ func main() {
 	w.SetContent(container.NewVBox(
 		workDirWidget,
 		container.NewGridWithColumns(
-			2,
-			CreateFileExplorer(contents, &index),
+			1,
+			// CreateFileExplorer(contents, &index),
 			editor,
 		),
 	))
